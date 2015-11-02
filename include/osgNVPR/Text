@@ -1,0 +1,79 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Text 28 2012-10-04 14:52:04Z cubicool $
+
+#ifndef OSGNVPR_TEXT
+#define OSGNVPR_TEXT
+
+#include <osgNVPR/Layout>
+#include <osgNVPR/Font>
+
+namespace osgNVPR {
+
+class OSGNVPR_EXPORT Text: public Drawable {
+public:
+	/*
+	TODO: Investigate implementing this...
+	enum Transform {
+        	NO_TRANSFORM           = GL_NONE,
+	        TRANSLATE_X_NV         = GL_TRANSLATE_X_NV,
+	        TRANSLATE_Y_NV         = GL_TRANSLATE_Y_NV,
+	        TRANSLATE_2D_NV        = GL_TRANSLATE_2D_NV,
+	        TRANSLATE_3D_NV        = GL_TRANSLATE_3D_NV,
+	        AFFINE_2D_NV           = GL_AFFINE_2D_NV,
+	        AFFINE_3D_NV           = GL_AFFINE_3D_NV,
+	        TRANSPOSE_AFFINE_2D_NV = GL_TRANSPOSE_AFFINE_2D_NV,
+	        TRANSPOSE_AFFINE_3D_NV = GL_TRANSPOSE_AFFINE_3D_NV
+	};
+	*/
+
+	Text(Font* font = 0);
+	Text(const String& text, Font* font = 0);
+
+	virtual void compileGLObjects(osg::RenderInfo& renderInfo) const;
+	virtual void releaseGLObjects(osg::State* state = 0) const;
+
+	virtual void fill(osgNVPR::Extensions* ext, osg::State& state) const;
+	virtual void stroke(osgNVPR::Extensions* ext, osg::State& state) const;
+
+	const String& getText() const {
+		return _text;
+	}
+
+	void setText(const String& text);
+
+	const Font* getFont() const {
+		return _font;
+	}
+
+	void setFont(Font* font);
+
+	const Layout* getLayout() const {
+		return _layout.get();
+	}
+
+	void setLayout(Layout* layout);
+
+	osg::Vec2::value_type getBaseline() const {
+		return _baseline;
+	}
+
+	const osg::Vec2Array* getTranslations() const {
+		return _translations.get();
+	}
+
+protected:
+	void _dirty();
+	void _computeBoundingBoxes(osgNVPR::Extensions* ext) const;
+
+	String               _text;
+	osg::ref_ptr<Layout> _layout;
+	osg::ref_ptr<Font>   _font;
+	
+	mutable osg::Vec2::value_type        _baseline;
+	mutable osg::ref_ptr<osg::Vec2Array> _translations;
+};
+
+}
+
+#endif
+

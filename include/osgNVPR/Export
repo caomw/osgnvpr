@@ -1,0 +1,35 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Export 27 2012-10-01 15:57:26Z cubicool $
+
+//! \file
+//! \brief Main doxygen docs; also defines compiler signature exports.
+
+#ifndef OSGNVPR_EXPORT_
+#define OSGNVPR_EXPORT_
+
+//! \mainpage osgNVPR NodeKit Documentation
+//!
+//! \section intro Introduction
+//!
+//! Stuff!
+//! 
+//! \section about What Is osgNVPR
+//!
+//! More stuff!
+//!
+//! \section usage A Quick Example
+//! 
+//! \include docs/demo.cpp
+
+#if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__) || defined( __BCPLUSPLUS__)  || defined( __MWERKS__)
+    #if defined( osgNVPR_EXPORTS )
+    #	define OSGNVPR_EXPORT __declspec(dllexport)
+    #else
+    #	define OSGNVPR_EXPORT __declspec(dllimport)
+    #endif
+#else
+    #define OSGNVPR_EXPORT
+#endif  
+
+#endif
+

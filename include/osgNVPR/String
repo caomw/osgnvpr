@@ -1,0 +1,18 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: String 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_STRING
+#define OSGNVPR_STRING
+
+#include <osgText/String>
+
+namespace osgNVPR {
+
+typedef osgText::String String;
+
+typedef String::vector_type::value_type Character;
+
+}
+
+#endif
+

@@ -1,0 +1,38 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: PathString 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_PATHSTRING
+#define OSGNVPR_PATHSTRING
+
+#include <osgNVPR/Path>
+
+namespace osgNVPR {
+
+// This class accepts SVG and PS formatted strings of data in order to create Paths.
+// Almost certainly this will end up being the most-used Path object.
+class OSGNVPR_EXPORT PathString: public Path {
+public:
+	// Both of these formats must be unsigned ASCII byte arrays; std::string
+	// will suffice.
+	enum Format {
+		FORMAT_SVG = GL_PATH_FORMAT_SVG_NV,
+		FORMAT_PS  = GL_PATH_FORMAT_PS_NV
+	};
+
+	// PathString cannot mix formats.
+	PathString(Format format);
+
+	virtual void compileGLObjects(osg::RenderInfo& renderInfo) const;
+
+	// Append a bit of string Format data to be compiled.
+	void append(const std::string& str);
+
+protected:
+	Format      _format;
+	std::string _str;
+};
+
+}
+
+#endif
+

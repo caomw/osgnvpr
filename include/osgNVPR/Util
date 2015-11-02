@@ -1,0 +1,77 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Util 29 2012-10-24 04:14:12Z cubicool $
+
+#ifndef OSGNVPR_UTIL
+#define OSGNVPR_UTIL
+
+#include <osgViewer/Viewer>
+#include <osgGA/CameraManipulator>
+#include <osgNVPR/Export>
+
+namespace osgNVPR {
+
+class OSGNVPR_EXPORT OrthographicCameraManipulator: public osgGA::CameraManipulator {
+public:
+	OrthographicCameraManipulator();
+
+	// These are virtual methods of osgGA::CameraManipulator; they must be overridden
+	// in order for our manipulator to work at all.
+        virtual void setByMatrix(const osg::Matrixd& matrix) {
+		_matrix = matrix;
+	}
+
+        virtual void setByInverseMatrix(const osg::Matrixd& matrix) {
+		setByMatrix(osg::Matrix::inverse(matrix));
+	}
+
+        virtual osg::Matrixd getMatrix() const {
+		return _matrix;
+	}
+
+        virtual osg::Matrixd getInverseMatrix() const {
+		return osg::Matrix::inverse(_matrix);
+	}
+
+	virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+
+	// These are our custom methods, not derived from osgGA::CameraManipulator.
+	osg::Node* getNode() {
+		return _node;
+	}
+
+	const osg::Node* getNode() const {
+		return _node;
+	}
+
+	const osg::Vec3& getZoomScale() const {
+		return _zoomScale;
+	}
+
+	virtual void setZoomScale(const osg::Vec3& zoomScale) {
+		_zoomScale = zoomScale;
+	}
+
+	const osg::Vec3& getTranslateScale() const {
+		return _translateScale;
+	}
+
+	virtual void setTranslateScale(const osg::Vec3& translateScale) {
+		_translateScale = translateScale;
+	}
+
+protected:
+	osg::Matrixd            _matrix;
+	osg::Vec3               _lastPos;
+	osg::Vec3               _translate;
+	osg::Vec3               _translateScale;
+	osg::Vec3               _scale;
+	osg::Vec3               _zoomScale;
+	osg::ref_ptr<osg::Node> _node;
+};
+
+OSGNVPR_EXPORT osg::Geode* createStencilGeode();
+
+}
+
+#endif
+

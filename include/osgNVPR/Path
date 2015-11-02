@@ -1,0 +1,167 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Path 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_PATH
+#define OSGNVPR_PATH
+
+#include <osgNVPR/Drawable>
+
+namespace osgNVPR {
+
+// Reference: Section 5.X.1.4
+class OSGNVPR_EXPORT Path: public Drawable {
+public:
+	struct Cap { enum Value {
+			FLAT       = GL_FLAT,
+		SQUARE     = GL_SQUARE_NV,
+		ROUND      = GL_ROUND_NV,
+		TRIANGULAR = GL_TRIANGULAR_NV
+	}; };
+
+	struct JoinStyle { enum Value {
+		NONE           = GL_NONE,
+		MITER_REVERT   = GL_MITER_REVERT_NV,
+		MITER_TRUNCATE = GL_MITER_TRUNCATE_NV,
+		BEVEL          = GL_BEVEL_NV,
+		ROUND          = GL_ROUND_NV
+	}; };
+
+	struct DashOffsetReset { enum Value {
+		MOVE_TO_RESETS    = GL_MOVE_TO_RESETS_NV,
+		MOVE_TO_CONTINUES = GL_MOVE_TO_CONTINUES_NV
+	}; };
+
+	struct FillMode { enum Value {
+		COUNT_UP   = GL_COUNT_UP_NV,
+		COUNT_DOWN = GL_COUNT_DOWN_NV,
+		INVERT     = GL_INVERT
+	}; };
+
+	struct CoverMode { enum Value {
+		CONVEX_HULL  = GL_CONVEX_HULL_NV,
+		BOUNDING_BOX = GL_BOUNDING_BOX_NV
+	}; };
+
+	template<typename T>
+	class Parameter {
+	public:
+		typedef T value_type;
+
+		Parameter(GLenum p, T val):
+		_param (p),
+		_val   (val),
+		_set   (false) {
+		}
+
+		bool isSet() const {
+			return _set;
+		}
+
+		GLenum param() const {
+			return _param;
+		}
+
+		const T& get() const {
+			return _val;
+		}
+
+		void set(T val) {
+			_val = val;
+			_set = true;
+		}
+
+	private:
+		GLenum _param;
+		T      _val;
+		bool   _set;
+	};
+
+	// Table 6.Y are the initial values.
+	struct Parameters {
+		Parameters():
+		strokeWidth     (GL_PATH_STROKE_WIDTH_NV, 1.0f),
+		intialEndCap    (GL_PATH_INITIAL_END_CAP_NV, Cap::FLAT),
+		terminalEndCap  (GL_PATH_TERMINAL_END_CAP_NV, Cap::FLAT),
+		initialDashCap  (GL_PATH_INITIAL_DASH_CAP_NV, Cap::FLAT),
+		terminalDashCap (GL_PATH_TERMINAL_DASH_CAP_NV, Cap::FLAT),
+		joinStyle       (GL_PATH_JOIN_STYLE_NV, JoinStyle::MITER_REVERT),
+		miterLimit      (GL_PATH_MITER_LIMIT_NV, 4),
+		dashOffset      (GL_PATH_DASH_OFFSET_NV, 0.0f),
+		dashOffsetReset (GL_PATH_DASH_OFFSET_RESET_NV, DashOffsetReset::MOVE_TO_CONTINUES),
+		clientLength    (GL_PATH_CLIENT_LENGTH_NV, 0.0f),
+		fillMode        (GL_PATH_FILL_MODE_NV, FillMode::COUNT_UP),
+		fillMask        (GL_PATH_FILL_MASK_NV, 0xFF),
+		fillCoverMode   (GL_PATH_FILL_COVER_MODE_NV, CoverMode::CONVEX_HULL),
+		strokeCoverMode (GL_PATH_STROKE_COVER_MODE_NV, CoverMode::CONVEX_HULL) {
+		}
+
+		Parameter<GLfloat>                strokeWidth;
+		Parameter<Cap::Value>             intialEndCap;
+		Parameter<Cap::Value>             terminalEndCap;
+		Parameter<Cap::Value>             initialDashCap;
+		Parameter<Cap::Value>             terminalDashCap;
+		Parameter<JoinStyle::Value>       joinStyle;
+		Parameter<GLfloat>                miterLimit;
+		Parameter<GLfloat>                dashOffset;
+		Parameter<DashOffsetReset::Value> dashOffsetReset;
+		Parameter<GLfloat>                clientLength;
+		Parameter<FillMode::Value>        fillMode;
+		Parameter<GLint>                  fillMask;
+		Parameter<CoverMode::Value>       fillCoverMode;
+		Parameter<CoverMode::Value>       strokeCoverMode;
+	};
+
+	META_Object(osgNVPR, Path);
+
+	Path();
+	Path(const Path& path, const osg::CopyOp& copyOp);
+
+	// We provide a default releaseGLObjects that deletes a SINGLE path _IF_
+	// _name isn't 0. This means your derived Path objects needs to call
+	// glGenPathsNV itself. Furthermore, if you override Path in some way
+	// such that _name is only as BASE id (such as a sequence of glyphs or
+	// some other kind of instanced container), you'll need to override this
+	// release method as well.
+	virtual void releaseGLObjects(osg::State* state = 0) const;
+
+	virtual void fill(osgNVPR::Extensions* ext, osg::State& state) const;
+	virtual void stroke(osgNVPR::Extensions* ext, osg::State& state) const;
+
+	GLint getName() const {
+		return _name;
+	}
+
+	const Parameters& getParameters() const {
+		return _parameters;
+	}
+
+	Parameters& getParameters() {
+		return _parameters;
+	}
+
+	void setParameters(const Parameters& parameters) {
+		_parameters = parameters;
+	}
+
+protected:
+	// A convenience helper for setting the various BoundingBox members of the
+	// path associated with _name. Not necessary to call, but helpful.
+	void _computeBoundingBoxes(osgNVPR::Extensions* ext) const;
+
+	// Another convenience helper that will set all of the parameters contained in
+	// _parameters on the path associated with _name.
+	void _setParameters(osgNVPR::Extensions* ext) const;
+
+	Parameters _parameters;
+
+	mutable GLuint _name;
+
+
+
+	osg::ref_ptr<osg::Program> _program;
+};
+
+}
+
+#endif
+

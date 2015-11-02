@@ -1,0 +1,15 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: io_utils 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_IO_UTILS
+#define OSGNVPR_IO_UTILS
+
+#include <ostream>
+#include <osgNVPR/Font>
+
+OSGNVPR_EXPORT std::ostream& operator<<(std::ostream& output, const osgNVPR::Font::FontMetrics& metrics);
+OSGNVPR_EXPORT std::ostream& operator<<(std::ostream& output, const osgNVPR::Font::GlyphMetrics::GlyphData& glyphData);
+OSGNVPR_EXPORT std::ostream& operator<<(std::ostream& output, const osg::BoundingBox& boundingBox);
+
+#endif
+

@@ -1,0 +1,74 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Paint 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_PAINT
+#define OSGNVPR_PAINT
+
+#include <osg/Program>
+#include <osgNVPR/Extensions>
+
+namespace osgNVPR {
+
+// The Paint interface is used to issue GL commands that provide the color, gradient,
+// or shader output for a Path during its draw method. The order of operations is:
+//
+// drawable.drawImplementation()
+// 	paint.prePaint()
+// 	glStencil{Stroke,Fill}Path()
+// 	paint.paint()
+// 	glCover{Stroke,Fill}Path()
+// 	paint.postPaint()
+class OSGNVPR_EXPORT Paint: public osg::Referenced {
+public:
+	virtual void prePaint(osgNVPR::Extensions* ext, osg::State& state) const {
+	}
+
+	virtual void paint(osgNVPR::Extensions* ext, osg::State& state) const = 0;
+	
+	virtual void postPaint(osgNVPR::Extensions* ext, osg::State& state) const {
+	}
+};
+
+// This is a trivial implementation of Paint that simply sets a single solid color.
+class OSGNVPR_EXPORT SolidPaint: public Paint {
+public:
+	SolidPaint(const osg::Vec4& color = osg::Vec4());
+
+	virtual void paint(osgNVPR::Extensions* ext, osg::State& state) const;
+	
+	const osg::Vec4& getColor() const {
+		return _color;
+	}
+
+	void setColor(const osg::Vec4& color) {
+		_color = color;
+	}
+
+protected:
+	osg::Vec4 _color;
+};
+
+// This Paint subclass lets you use an osg::Program.
+class OSGNVPR_EXPORT ShaderPaint: public Paint {
+public:
+	ShaderPaint(osg::Program* program = 0);
+
+	virtual void prePaint(osgNVPR::Extensions* ext, osg::State& state) const;
+	virtual void paint(osgNVPR::Extensions* ext, osg::State& state) const;
+	virtual void postPaint(osgNVPR::Extensions* ext, osg::State& state) const;
+
+	const osg::Program* getProgram() const {
+		return _program.get();
+	}
+
+	void setProgram(osg::Program* program);
+
+protected:
+	osg::ref_ptr<osg::Program>  _program;
+	osg::ref_ptr<osg::StateSet> _stateSet;
+};
+
+}
+
+#endif
+

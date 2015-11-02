@@ -1,0 +1,210 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Drawable 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_DRAWABLE
+#define OSGNVPR_DRAWABLE
+
+#include <osg/Drawable>
+#include <osgNVPR/Paint>
+
+namespace osgNVPR {
+
+/*
+struct BoundingBoxUpdateCallback: public UpdateCallback {
+	virtual void update(osg::NodeVisitor* nv, osg::Drawable* drawable) {
+		if(dirty && drawable) drawable->dirtyBound();
+	}
+};
+*/
+
+// This is a "future-aware" baseclass, designed to be derived from by at least our
+// Path objects and Text. You may also want to create your own custom instanced
+// rendering objects using Drawable.
+class OSGNVPR_EXPORT Drawable: public osg::Drawable {
+public:
+	// These enums determine the order of filling and stroking we do in our
+	// default drawImplementation. This may or may not apply to your own
+	// derived classes.
+	enum PaintMethod {
+		FILL_ONLY,
+		STROKE_ONLY,
+		FILL_THEN_STROKE,
+		STROKE_THEN_FILL
+	};
+
+	// The following enums define constants that will be used in possible 
+	// derived classes. We use a special value, PATH_{STENCIL/COVER}, to
+	// indidcate that we want to defer to the value set in the path itself.
+	enum StencilMode {
+		INVERT       = GL_INVERT,
+		COUNT_UP     = GL_COUNT_UP_NV,
+		COUNT_DOWN   = GL_COUNT_DOWN_NV,
+		PATH_STENCIL = -1
+	};
+
+	// NOTE: BOUNDING_BOXES is only applicable when the dervied class is
+	// calling one of the "Instanced" family of functions.
+	enum CoverMode {
+		CONVEX_HULL    = GL_CONVEX_HULL_NV,
+		BOUNDING_BOX   = GL_BOUNDING_BOX_NV,
+		BOUNDING_BOXES = GL_BOUNDING_BOX_OF_BOUNDING_BOXES_NV,
+		PATH_COVER     = -1
+	};
+
+	enum BoundingBoxMode {
+		OBJECT,
+		FILL,
+		STROKE
+	};
+
+	META_Object(osgNVPR, Drawable);
+
+	Drawable();
+	Drawable(const Drawable& path, const osg::CopyOp& copyOp);
+
+	// Overrides from osg::Drawable. Our version of compile/release simply sets
+	// the _compiled boolean, which is used to call CompileCallbacks.
+	virtual void drawImplementation(osg::RenderInfo& renderInfo) const;
+	virtual void compileGLObjects(osg::RenderInfo& renderInfo) const;
+	virtual void releaseGLObjects(osg::State* state=0) const;
+
+	virtual osg::BoundingBox computeBound() const;
+
+	bool isCompiled() const {
+		return _compiled;
+	}
+
+	const Paint* getFillPaint() const {
+		return _fillPaint.get();
+	}
+	
+	void setFillPaint(Paint* paint) {
+		_fillPaint = paint;
+	}
+
+	const Paint* getStrokePaint() const {
+		return _strokePaint.get();
+	}
+	
+	void setStrokePaint(Paint* paint) {
+		_strokePaint = paint;
+	}
+	
+	PaintMethod getPaintMethod() const {
+		return _paintMethod;
+	}
+	
+	void setPaintMethod(PaintMethod paintMethod) {
+		_paintMethod = paintMethod;
+	}
+
+	StencilMode getFillStencilMode() const {
+		return _fillStencilMode;
+	}
+	
+	void setFillStencilMode(StencilMode stencilMode) {
+		_fillStencilMode = stencilMode;
+	}
+
+	GLuint getFillMask() const {
+		return _fillMask;
+	}
+	
+	void setFillMask(GLuint fillMask) {
+		_fillMask = fillMask;
+	}
+
+	GLenum getFillCoverMode() const {
+		return _fillCoverMode;
+	}
+
+	void setFillCoverMode(CoverMode coverMode) {
+		_fillCoverMode = coverMode;
+	}
+
+	GLint getStrokeStencilMode() const {
+		return _strokeStencilMode;
+	}
+
+	void setStrokeStencilMode(StencilMode stencilMode) {
+		_strokeStencilMode = stencilMode;
+	}
+
+	GLuint getStrokeMask() const {
+		return _strokeMask;
+	}
+
+	void setStrokeMask(GLuint strokeMask) {
+		_strokeMask = strokeMask;
+	}
+
+	GLenum getStrokeCoverMode() const {
+		return _strokeCoverMode;
+	}
+
+	void setStrokeCoverMode(CoverMode coverMode) {
+		_strokeCoverMode = coverMode;
+	}
+
+	BoundingBoxMode getBoundingBoxMode() const {
+		return _boundingBoxMode;
+	}
+
+	void setBoundingBoxMode(BoundingBoxMode boundingBoxMode) {
+		_boundingBoxMode = boundingBoxMode;
+	}
+
+	// TODO: These will return the wrong values if compileGLObjects() hasn't already
+	// been called. This, of course, also applies to the derived getBound(). 
+	const osg::BoundingBox& getObjectBound() const {
+		return _objectBoundingBox;
+	}
+
+	const osg::BoundingBox& getFillBound() const {
+		return _fillBoundingBox;
+	}
+	
+	const osg::BoundingBox& getStrokeBound() const {
+		return _strokeBoundingBox;
+	}
+
+	// These methods are called in particular orders depending on our PaintMethod.
+	virtual void fill(osgNVPR::Extensions* ext, osg::State& state) const {
+	}
+
+	virtual void stroke(osgNVPR::Extensions* ext, osg::State& state) const {
+	}
+
+protected:
+	// These are helper routines derived classes will likely want to use in
+	// their fill and stroke methods. The StencilMode method can get away with
+	// passing in a value; the CoverMode methods need to be unique per fill or
+	// stroke.
+	GLint  _getStencilMode(StencilMode sm) const;
+	GLenum _getFillCoverMode() const;
+	GLenum _getStrokeCoverMode() const;
+
+	PaintMethod         _paintMethod;
+	osg::ref_ptr<Paint> _fillPaint;
+	osg::ref_ptr<Paint> _strokePaint;
+	StencilMode         _fillStencilMode;
+	GLuint              _fillMask;
+	CoverMode           _fillCoverMode;
+	StencilMode         _strokeStencilMode;
+	GLuint              _strokeMask;
+	CoverMode           _strokeCoverMode;
+	BoundingBoxMode     _boundingBoxMode;
+
+	// osg::ref_ptr<BoundingBoxUpdateCallback> _boundingBoxUpdateCallback;
+
+	// These need to be mutable since they're set during const methods.
+	mutable osg::BoundingBox _objectBoundingBox;
+	mutable osg::BoundingBox _fillBoundingBox;
+	mutable osg::BoundingBox _strokeBoundingBox;
+	mutable bool             _compiled;
+};
+
+}
+
+#endif
+

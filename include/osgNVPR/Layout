@@ -1,0 +1,61 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Layout 29 2012-10-24 04:14:12Z cubicool $
+
+#ifndef OSGNVPR_LAYOUT
+#define OSGNVPR_LAYOUT
+
+#include <osgNVPR/Font>
+
+namespace osgNVPR {
+
+// A Layout is used by the Font/Text classes to specify what character to break
+// lines on, enforcing a potential maximum width, indicating whether the layout is
+// left-to-right, and could potenially even use something like harfbuzz to
+// shape text.
+//
+// This is the pure virtual interface that defines a single method, layout(), which
+// should return a newly-allocated osg::Vec2Array object containing the 2D translations
+// for the String object.
+class OSGNVPR_EXPORT Layout: public osg::Referenced {
+public:
+	virtual osg::Vec2Array* layout(
+		osgNVPR::Extensions* ext,
+		const Font*          font,
+		const String&        string
+	) const = 0;
+};
+
+// This Layout simply divides a string into N number of sections, breaking on
+// whatever the set "newline" character is. By default, this is the ASCII ordinal
+// value of '\n'.
+class OSGNVPR_EXPORT NewlineLayout: public Layout {
+public:
+	typedef std::pair<unsigned int, unsigned int> Line;
+	typedef std::vector<Line>                     Lines;
+
+	NewlineLayout();
+
+	virtual osg::Vec2Array* layout(
+		osgNVPR::Extensions* ext,
+		const Font*          font,
+		const String&        string
+	) const;
+
+	Character getNewlineCharacter() const {
+		return _newline;
+	}
+
+	void setNewlineCharacter(Character nl) {
+		_newline = nl;
+	}
+
+	static void computeLines(const String& string, Character newline, Lines& lines);
+
+protected:
+	Character _newline;
+};
+
+}
+
+#endif
+

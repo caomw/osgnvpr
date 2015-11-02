@@ -1,0 +1,96 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: PathCommands 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_PATHCOMMANDS
+#define OSGNVPR_PATHCOMMANDS
+
+#include <cstdarg>
+#include <osg/Array>
+#include <osgNVPR/Path>
+
+namespace osgNVPR {
+
+// TODO: Evaluate the following...
+// Because these will likely be so commonly used, they are not tucked away into the
+// PathCommands class/namespace. This may be a bad decision, however, and subject to change.
+enum Command {
+	HORIZONTAL_LINE_TO                 = GL_HORIZONTAL_LINE_TO_NV,
+	RELATIVE_HORIZONTAL_LINE_TO        = GL_RELATIVE_HORIZONTAL_LINE_TO_NV,
+	VERTICAL_LINE_TO                   = GL_VERTICAL_LINE_TO_NV,
+	RELATIVE_VERTICAL_LINE_TO          = GL_RELATIVE_VERTICAL_LINE_TO_NV,
+	MOVE_TO                            = GL_MOVE_TO_NV,
+	RELATIVE_MOVE_TO                   = GL_RELATIVE_MOVE_TO_NV,
+	LINE_TO                            = GL_LINE_TO_NV,
+	RELATIVE_LINE_TO                   = GL_RELATIVE_LINE_TO_NV,
+	SMOOTH_QUADRATIC_CURVE_TO          = GL_SMOOTH_QUADRATIC_CURVE_TO_NV,
+	RELATIVE_SMOOTH_QUADRATIC_CURVE_TO = GL_RELATIVE_SMOOTH_QUADRATIC_CURVE_TO_NV,
+	QUADRATIC_CURVE_TO                 = GL_QUADRATIC_CURVE_TO_NV,
+	RELATIVE_QUADRATIC_CURVE_TO        = GL_RELATIVE_QUADRATIC_CURVE_TO_NV,
+	SMOOTH_CUBIC_CURVE_TO              = GL_SMOOTH_CUBIC_CURVE_TO_NV,
+	RELATIVE_SMOOTH_CUBIC_CURVE_TO     = GL_RELATIVE_SMOOTH_CUBIC_CURVE_TO_NV,
+	SMALL_CCW_ARC_TO                   = GL_SMALL_CCW_ARC_TO_NV,
+	RELATIVE_SMALL_CCW_ARC_TO          = GL_RELATIVE_SMALL_CCW_ARC_TO_NV,
+	SMALL_CW_ARC_TO                    = GL_SMALL_CW_ARC_TO_NV,
+	RELATIVE_SMALL_CW_ARC_TO           = GL_RELATIVE_SMALL_CW_ARC_TO_NV,
+	LARGE_CCW_ARC_TO                   = GL_LARGE_CCW_ARC_TO_NV,
+	RELATIVE_LARGE_CCW_ARC_TO          = GL_RELATIVE_LARGE_CCW_ARC_TO_NV,
+	LARGE_CW_ARC_TO                    = GL_LARGE_CW_ARC_TO_NV,
+	RELATIVE_LARGE_CW_ARC_TO           = GL_RELATIVE_LARGE_CW_ARC_TO_NV,
+	CIRCULAR_CCW_ARC_TO                = GL_CIRCULAR_CCW_ARC_TO_NV,
+	CIRCULAR_CW_ARC_TO                 = GL_CIRCULAR_CW_ARC_TO_NV,
+	CIRCULAR_TANGENT_ARC_TO            = GL_CIRCULAR_TANGENT_ARC_TO_NV,
+	CUBIC_CURVE_TO                     = GL_CUBIC_CURVE_TO_NV,
+	RELATIVE_CUBIC_CURVE_TO            = GL_RELATIVE_CUBIC_CURVE_TO_NV,
+	ARC_TO                             = GL_ARC_TO_NV,
+	RELATIVE_ARC_TO                    = GL_RELATIVE_ARC_TO_NV,
+	CLOSE_PATH                         = GL_CLOSE_PATH_NV,
+};
+
+// A class that allows you to append a path objects and then append drawing commands
+// to it like Cairo.
+// Reference: 5.X.1 Path Specification
+class OSGNVPR_EXPORT PathCommands: public Path {
+public:
+	PathCommands();
+
+	// Reference: 5.X.1.1 Explicit Path Specification
+	// A virtual method that will compile the path internally for use in stencil and
+	// cover operations.
+	virtual void compileGLObjects(osg::RenderInfo& renderInfo) const;
+
+	// Append a Command to the internal vector to be compiled with glPathCommands() when
+	// compileGLObjects() is called; the number of arguments must match the command in
+	// question, or else false is returned.
+	// WARNING! YOU MUST PASS FLOATS to this routine; integers will not get caught by
+	// the va_arg parsing, and you'll get all 0 coordinates.
+	// TODO: Fix the above.
+	bool append(Command command, ...);
+	bool append(char alias, ...);
+
+	// Finalize the path drawing commands.
+	void close();
+
+	const osg::UByteArray* getCommands() const {
+		return _commands.get();
+	}
+
+	const osg::FloatArray* getCoords() const {
+		return _coords.get();
+	}
+
+	// Returns the Command corresponding to the 
+	static Command aliasToCommand(char alias);
+
+	static unsigned int getCommandArgumentSize(Command command);
+
+protected:
+	bool _append(Command command, va_list& vl);
+	
+	osg::ref_ptr<osg::UByteArray> _commands;
+	osg::ref_ptr<osg::FloatArray> _coords;
+};
+
+}
+
+#endif
+

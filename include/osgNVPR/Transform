@@ -1,0 +1,90 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Drawable 23 2012-09-28 19:59:17Z cubicool $
+
+#ifndef OSGTEXT_TRANSFORM
+#define OSGTEXT_TRANSFORM
+
+#include <osg/Geode>
+#include <osg/MatrixTransform>
+#include <osgNVPR/Drawable>
+
+namespace osgNVPR {
+
+class OSGNVPR_EXPORT Transform: public osg::MatrixTransform {
+public:
+	// A note about the *_BASELINE group of Alignment enums:
+	// These are only used for osgNVPR::Text Drawables; attempting
+	// to use BASELINE alignment while having anything OTHER than Text
+	// in your immediate subgraph will case a failure.
+	enum Alignment {
+		LEFT_TOP,
+		LEFT_CENTER,
+		LEFT_BOTTOM,
+		CENTER_TOP,
+		CENTER_CENTER,
+		CENTER_BOTTOM,
+		RIGHT_TOP,
+		RIGHT_CENTER,
+		RIGHT_BOTTOM,
+		LEFT_BASELINE,
+		CENTER_BASELINE,
+		RIGHT_BASELINE,
+		USER_ALIGNMENT,
+	};
+
+	enum AxisAlignment {
+		XY_PLANE,
+		REVERSED_XY_PLANE,
+		XZ_PLANE,
+		REVERSED_XZ_PLANE,
+		YZ_PLANE,
+		REVERSED_YZ_PLANE,
+		USER_AXIS_ALIGNMENT
+	};
+
+	Transform();
+
+	// TODO: Implement something here where we detect that the children have been
+	// compiled and do interesting stuff.
+	virtual void traverse(osg::NodeVisitor& nv);
+
+	void addDrawable(Drawable* drawable);
+
+	Alignment getAlignment() const {
+		return _alignment;
+	}
+	
+	void setAlignment(Alignment alignment);
+
+	AxisAlignment getAxisAlignment() const {
+		return _axisAlignment;
+	}
+	
+	void setAxisAlignment(AxisAlignment axisAlignment);
+
+	const osg::Vec3& getPosition() const {
+		return _position;
+	}
+	
+	void setPosition(const osg::Vec3& position);
+
+	// TODO: Remove this...
+	osg::Geode* getGeode() {
+		return _geode.get();
+	}
+
+protected:
+	osg::Vec3     _position;
+	Alignment     _alignment;
+	AxisAlignment _axisAlignment;
+	bool          _dirtyTransform;
+
+	// Holds our paths; should be the only child of this object, but
+	// we won't go to extremes to guarantee that.
+	osg::ref_ptr<osg::Geode> _geode;
+};
+
+}
+
+#endif
+

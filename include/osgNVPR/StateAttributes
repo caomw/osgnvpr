@@ -1,0 +1,116 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: StateAttributes 27 2012-10-01 15:57:26Z cubicool $
+
+#ifndef OSGNVPR_STATE_ATTRIBUTES
+#define OSGNVPR_STATE_ATTRIBUTES
+
+#include <osg/Stencil>
+#include <osgNVPR/Export>
+
+namespace osgNVPR {
+
+#define NVPRSA_STENCIL_FUNC         31100
+#define NVPRSA_STENCIL_DEPTH_OFFSET 31101
+#define NVPRSA_COVER_DEPTH_FUNC     31102
+
+// TODO: Derive from osg::Stencil instead?
+class OSGNVPR_EXPORT StencilFunc: public osg::StateAttribute {
+public:
+	typedef osg::Stencil::Function Function;
+
+	StencilFunc(
+		Function function = osg::Stencil::ALWAYS,
+		GLint    ref      = 0,
+		GLuint   mask     = ~0u
+	);
+
+	StencilFunc(const StencilFunc& depth, const osg::CopyOp& copyOp);
+
+	META_StateAttribute(osgNVPR, StencilFunc, osg::StateAttribute::Type(NVPRSA_STENCIL_FUNC));
+
+	virtual int compare(const osg::StateAttribute& attr) const;
+	virtual void apply(osg::State& state) const;
+
+	Function getFunction() const {
+		return _func;
+	}
+
+	GLint getFunctionRef() const {
+		return _ref;
+	}
+
+	GLuint getFunctionMask() const {
+		return _mask;
+	}
+
+	void setFunction(Function function, GLint ref, GLuint mask) {
+		_func = function;
+		_ref  = ref;
+		_mask = mask;
+	}
+
+protected:
+	Function _func;
+	GLint    _ref;
+	GLuint   _mask;
+};
+
+class OSGNVPR_EXPORT StencilDepthOffset: public osg::StateAttribute {
+public:
+	StencilDepthOffset(GLfloat factor = -0.05, GLint units = -1);
+	StencilDepthOffset(const StencilDepthOffset& depth, const osg::CopyOp& copyOp);
+
+	META_StateAttribute(osgNVPR, StencilDepthOffset, osg::StateAttribute::Type(NVPRSA_STENCIL_DEPTH_OFFSET));
+
+	virtual int compare(const osg::StateAttribute& attr) const;
+	virtual void apply(osg::State& state) const;
+
+	GLfloat getFactor() const {
+		return _factor;
+	}
+
+	void setFactor(GLfloat factor) {
+		_factor = factor;
+	}
+
+	GLint getUnits() const {
+		return _units;
+	}
+
+	void setUnits(GLint units) {
+		_units = units;
+	}
+
+protected:
+	GLfloat _factor;
+	GLint   _units;
+};
+
+class OSGNVPR_EXPORT CoverDepthFunc: public osg::StateAttribute {
+public:
+	typedef osg::Stencil::Function Function;
+
+	CoverDepthFunc(Function function = osg::Stencil::ALWAYS);
+	CoverDepthFunc(const CoverDepthFunc& depth, const osg::CopyOp& copyOp);
+
+	META_StateAttribute(osgNVPR, CoverDepthFunc, osg::StateAttribute::Type(NVPRSA_COVER_DEPTH_FUNC));
+
+	virtual int compare(const osg::StateAttribute& attr) const;
+	virtual void apply(osg::State& state) const;
+
+	Function getFunction() const {
+		return _zfunc;
+	}
+
+	void setFunction(Function function) {
+		_zfunc = function;
+	}
+
+protected:
+	Function _zfunc;
+};
+
+}
+
+#endif
+

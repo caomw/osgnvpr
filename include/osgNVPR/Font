@@ -1,0 +1,228 @@
+// -*-c++-*- osgNVPR - Copyright (C) 2012 osgNVPR Development Team
+// $Id: Font 29 2012-10-24 04:14:12Z cubicool $
+
+#ifndef OSGNVPR_FONT
+#define OSGNVPR_FONT
+
+#include <ostream>
+#include <osgNVPR/String>
+#include <osgNVPR/Path>
+
+namespace osgNVPR {
+
+// Reference: Section 5.X.1.3
+//
+// A Font object represents a contiguous sequence of glyph paths for a specified font.
+// This object is useful when you will be using entire character sets (indeed, the glyph
+// paths will be preallocated for you).
+//
+// In most cases, the user will create a Font hashing object of some sort and pass these
+// objects to osgNVPR::Text, which handles the dirty jobs of compilation, releasing, and
+// the like.
+class OSGNVPR_EXPORT Font: public osg::Referenced {
+public:
+	enum Style {
+		NONE        = GL_NONE,
+		BOLD        = GL_BOLD_BIT_NV,
+		ITALIC      = GL_ITALIC_BIT_NV,
+		BOLD_ITALIC = GL_BOLD_BIT_NV | GL_ITALIC_BIT_NV
+	};
+
+	enum MissingGlyph {
+		SKIP = GL_SKIP_MISSING_GLYPH_NV,
+		USE  = GL_USE_MISSING_GLYPH_NV
+	};
+
+	// Reference: 6.X.3. Path Object Glyph Typographic Queries
+	struct FontMetrics: public osg::Referenced {
+		FontMetrics(const GLfloat* data);
+
+		GLfloat xMinBounds;
+		GLfloat yMinBounds;
+		GLfloat xMaxBounds;
+		GLfloat yMaxBounds;
+		GLfloat unitsPerEm;
+		GLfloat ascender;
+		GLfloat descender;
+		GLfloat height;
+		GLfloat maxAdvanceWidth;
+		GLfloat maxAdvanceHeight;
+		GLfloat underlinePosition;
+		GLfloat underlineThickness;
+		bool    hasKerning;
+	};
+
+	class GlyphMetrics: public osg::Referenced {
+	public:
+		struct GlyphData {
+			GlyphData();
+
+			void setData(const GLfloat* data);
+
+			GLfloat width;
+			GLfloat height;
+			GLfloat horizontalBearingX;
+			GLfloat horizontalBearingY;
+			GLfloat horizontalBearingAdvance;
+			GLfloat verticalBearingX;
+			GLfloat verticalBearingY;
+			GLfloat verticalBearingAdvance;
+			bool    hasKerning;
+		};
+
+		typedef osg::Vec2Array CoordArray;
+
+		GlyphMetrics(GLsizei numGlyphs, const GLfloat* data);
+
+		const GlyphData*  getGlyphData(Character character) const;
+		const CoordArray* getGlyphCoords(Character character) const;
+
+	protected:
+		// Only the Font class can SET the _coords data, so it is
+		// a friend class.
+		friend class Font;
+
+		typedef std::vector<GlyphData>                 GlyphDataVector;
+		typedef std::vector<osg::ref_ptr<CoordArray> > GlyphCoordsVector;
+
+		GlyphDataVector   _data;
+		GlyphCoordsVector _coords;
+	};
+
+	Font(
+		const std::string& font = "Sans",
+		Style              style = NONE,
+		GLfloat            scale = 2048,
+		MissingGlyph       mg    = SKIP
+	);
+
+	~Font();
+
+	// Calls glPathGlyphRangeNV for us, allocating numGlyphs glyphs. Unfortunately,
+	// according to the docs, there is no way to know if loading the font failed,
+	// so this function cannot (yet) return bool. Unlike a typical compileGLObjects,
+	// this method is NOT const
+	//
+	// Also note that this function, like much of the Font API, can't be easily
+	// called without something allowing it to fetch an Extensions pointer.
+	virtual void compileGLObjects(osg::RenderInfo& renderInfo);
+
+	// Deletes the glyph path range using glDeletePaths, frees up metrics, etc.
+	// Also sets _compiled to false.
+	virtual void releaseGLObjects(osg::State* state = 0);
+
+	// Returns an newly-allocated GLfloat array for the given sequence
+	// of glyphs. Since you must also pass in an Extensions pointer, this method is
+	// likely only useful by the Text/Layout classes.
+	virtual GLfloat* getTranslations(
+		osgNVPR::Extensions* ext,
+		const String&        text,
+		unsigned int         offset,
+		unsigned int         length
+	) const;
+
+	GLuint getGlyphBase() const {
+		return _glyphBase;
+	}
+
+	// TODO: Is this needed? Should I make an enum?
+	// This returns the internal target determined by the call to setFont.
+	GLenum getTarget() const {
+		return _target;
+	}
+
+	// Returns a pointer to the FontMetrics data that is calculated after the Font object
+	// is compiled.
+	const FontMetrics* getFontMetrics() const {
+		return _fontMetrics.get();
+	}
+
+	// Similar to getFontMetrics(), though the glyph metric API is slightly different.
+	// Clients must use the GlyphMetrics::getGlyphData() method to get anything interesting.
+	const GlyphMetrics* getGlyphMetrics() const {
+		return _glyphMetrics.get();
+	}
+
+	const std::string& getFont() const {
+		return _name;
+	}
+	
+	// Determines what kind of font you're requesting based on the string.
+	// The following hueristic is used (these are case-insensitive):
+	// 
+	// 1. If the string is exactly one of: "serif", "sans", "mono", or "missing"
+	//    then the GL_STANDARD_FONT_NAME_NV target is used. These are built into
+	//    the driver.
+	//
+	// 2. If the string ends with the substring ".ttf" it is considered to be a
+	//    path to a file on disk and GL_FILE_NAME_NV is used.
+	//
+	// 3. Otherwise, the font is assumed to be a system font using GL_SYSTEM_FONT_NAME_NV.
+	virtual void setFont(const std::string& font);
+
+	Style getStyle() const {
+		return _style;
+	}
+
+	void setStyle(Style style) {
+		_style = style;
+	}
+
+	GLsizei getNumGlyphs() const {
+		return _numGlyphs;
+	}
+
+	void setNumGlyphs(GLsizei numGlyphs) {
+		_numGlyphs = numGlyphs;
+	}
+
+	MissingGlyph getHandleMissingGlyph() const {
+		return _missingGlyph;
+	}
+
+	void setHandleMissingGlyph(MissingGlyph missingGlyph) {
+		_missingGlyph = missingGlyph;
+	}
+
+	GLfloat getScale() const {
+		return _scale;
+	}
+
+	void setScale(GLfloat scale) {
+		_scale = scale;
+	}
+
+	const Path* getPathTemplate() const {
+		return _pathTemplate.get();
+	}
+
+	void setPathTemplate(const Path* path) {
+		_pathTemplate = path;
+	}
+
+	bool isCompiled() const {
+		return _compiled;
+	}
+
+protected:
+	void _setFontMetrics(osgNVPR::Extensions* ext);
+	void _setGlyphMetrics(osgNVPR::Extensions* ext);
+
+	GLuint                   _glyphBase;
+	GLenum                   _target;
+	std::string              _name;
+	Style                    _style;
+	GLsizei                  _numGlyphs;
+	MissingGlyph             _missingGlyph;
+	osg::ref_ptr<const Path> _pathTemplate;
+	GLfloat                  _scale;
+	bool                     _compiled;
+
+	osg::ref_ptr<FontMetrics>  _fontMetrics;
+	osg::ref_ptr<GlyphMetrics> _glyphMetrics;
+};
+
+}
+
+#endif
+
